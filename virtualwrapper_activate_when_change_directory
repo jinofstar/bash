@@ -1,0 +1,36 @@
+# copy your .bash_profile
+export WORKON_HOME=$HOME/.virtualenvs
+export VIRTUALENVWRAPPER_VIRTUALENV_ARGS='--no-site-packages'
+source /usr/local/bin/virtualenvwrapper.sh
+
+function workon_cwd {
+    PROJECT_ROOT=`git rev-parse --show-toplevel 2> /dev/null`
+    if [ $? != 0 ]; then
+        PROJECT_ROOT="`pwd`"
+    fi
+
+    if [ -f "$PROJECT_ROOT/.venv" ]; then
+        ENV_NAME=`cat "$PROJECT_ROOT/.venv"`
+    elif [ -f "$PROJECT_ROOT/.venv/bin/activate" ]; then
+        ENV_NAME="$PROJECT_ROOT/.venv"
+    else
+        ENV_NAME=""
+    fi
+
+    if [ ! -z $ENV_NAME ]; then
+        if [ "$VIRTUAL_ENV" != "$WORKON_HOME/$ENV_NAME" ]; then
+            if [ -e "$WORKON_HOME/$ENV_NAME/bin/activate" ]; then
+                workon "$ENV_NAME" && export CD_VIRTUAL_ENV="$ENV_NAME"
+            fi
+        fi
+    elif [ "$CD_VIRTUAL_ENV" != "" ]; then
+        deactivate && unset CD_VIRTUAL_ENV
+    fi
+}
+
+# New cd function that does the virtualenv magic
+function venv_cd {
+    cd "$@" && workon_cwd
+}
+
+alias cd="venv_cd"
